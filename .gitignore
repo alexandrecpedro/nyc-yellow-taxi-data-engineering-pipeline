@@ -1,5 +1,10 @@
-# Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
+# Created by https://www.toptal.com/developers/gitignore/api/astro,windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
+# Edit at https://www.toptal.com/developers/gitignore?templates=astro,windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
+
+### Astro ###
+# Gitignore template for Astro projects
+# Ignore content collection generated files
+.astro
 
 ### dotenv ###
 .env
@@ -529,4 +534,4 @@ include/data/bronze/*.csv
 airflow_settings.yaml
 logs/
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
+# End of https://www.toptal.com/developers/gitignore/api/astro,windows,macos,linux,python,pythonvanilla,dotenv,visualstudiocode,pycharm,pycharm+all,pycharm+iml
