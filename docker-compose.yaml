@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres_nyc
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=airflow_db
+    ports:
+      - "5436:5432" # Sua porta sugerida
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck: # Adicionado para avisar quando o banco estiver pronto
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d airflow_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    # build: .
+    image: apache/airflow:2.10.2
+    tty: true
+    stdin_open: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    command: /init.sh
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=${DB_PORT}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    volumes:
+      - ./init.sh:/init.sh
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./include:/opt/airflow/include
+
+  scheduler:
+    # build: .
+    image: apache/airflow:2.10.2
+    # O comando garante que o banco esteja pronto antes de iniciar o scheduler
+    command: bash -c "airflow scheduler"
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME} # airflow_db
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=${DB_PORT}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      # Criamos a conexão do seu projeto via variável (ela terá prioridade sobre o YAML)
+      # - AIRFLOW_CONN_POSTGRES_NYC=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${PROJECT_DB}
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      # - AIRFLOW__LOGGING__SKIP_LOG_SYMLINK_CREATION=true
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data # Importante para ler os CSVs
+      - ./logs:/opt/airflow/logs
+      - ./include:/opt/airflow/include
+
+  webserver:
+    # build: .
+    image: apache/airflow:2.10.2
+    # Inicializa/atualiza o banco e depois sobe o webserver
+    command: bash -c "airflow db check && airflow webserver"
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "8088:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME} # airflow_db
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_PORT=${DB_PORT}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      # A conexão de dados agora usa a variável PROJECT_DB definida no seu .env
+      # - AIRFLOW_CONN_POSTGRES_NYC=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${PROJECT_DB}
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      # - AIRFLOW__LOGGING__SKIP_LOG_SYMLINK_CREATION=true
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+      - ./include:/opt/airflow/include
+
+volumes:
+  postgres_data:

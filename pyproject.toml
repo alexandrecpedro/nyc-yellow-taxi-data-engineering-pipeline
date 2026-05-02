@@ -1,0 +1,22 @@
+[project]
+name = "nyc-yellow-taxi"
+version = "0.1.0"
+description = "NYC Yellow Taxi Data Engineering Pipeline"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    #    "ipykernel>=7.2.0",
+    #    "notebook>=7.5.5",
+    # 1. Core
+    "pandas>=2.2.0",
+    "pyarrow>=24.0.0",
+    # 2. Database
+    "psycopg2-binary>=2.9.12",
+    "sqlalchemy>=2.0.49",
+    # 3. Airflow providers
+    "apache-airflow-providers-postgres>=5.10.0",
+    # 4. Config
+    "python-dotenv>=1.2.2",
+    # 5. Dashboard
+    "streamlit>=1.57.0",
+]
